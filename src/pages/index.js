@@ -5,6 +5,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
 
+import Plot from 'react-plotly.js';
+
 import SEO from "../components/seo"
 
 const useStyles = makeStyles((theme) => ({
@@ -34,8 +36,32 @@ function IndexPage() {
     } else {
         Cd  = -0.0105*Re+10.98;
     }
-    var maxheight = 1/2 * (V0*Math.sin(angle*Math.PI/180))**2/9.81 + height*1e-2;
-    var time = Math.sqrt(2*(2*maxheight - height*1e-2)/9.81);
+    if (Re > 1e3){
+        Cd = 0.47;
+    }
+    var Vy = V0*Math.sin(angle*Math.PI/180);
+    var Vx = V0*Math.cos(angle*Math.PI/180);
+    var Fdy = 1/2 * ro * (Vy/2)**2 * Cd * Math.PI * (bulletdiam*1e-3/2)**2;
+    var Fdx = 1/2 * ro * (Vx/2)**2 * Cd * Math.PI * (bulletdiam*1e-3/2)**2;
+    var maxheight = (1/2 * mass*1e-3 * Vy**2) / (9.81 * mass*1e-3 + Fdy) + height*1e-2;
+    var aX = Fdx/(mass*1e-3);
+    var aYUP = Fdy/(mass*1e-3) + 9.81;
+    var aYDOWN = Fdy/(mass*1e-3) - 9.81;
+    var timeUp = Vy/(9.81+Fdy/(mass*1e-3));
+    console.log(timeUp)
+    var timeDown = Math.abs(timeUp) + Math.abs((-Vy + Math.sqrt(Vy**2+2*9.81*height))/2*9.81);
+    var time = timeUp+timeDown;
+    // var maxDistance = Vx*time+1/2*aX*time**2;
+    // var calcheight = (positionX) => (((((-Vx+Math.sqrt(Vx**2+2*aX*positionX))/2*aX)*2*aYUP+Vy)**2-Vy**2)/2*aYUP + height*1e-2);
+    // var positionXs = [...Array(parseInt(maxDistance)).keys()];
+    // var posXs = [];
+    // var posYs = [];
+    // for (const posX in positionXs) {
+    //     posXs.push(posX);
+    //     posYs.push(calcheight(posX));
+    //   }
+    // console.log(posXs)
+    // console.log(posYs)
     return(
         <>
             <SEO title="Home" />
@@ -154,6 +180,17 @@ function IndexPage() {
                     />
                 </div>
             </form>
+            {/* <Plot
+                data={[
+                {
+                    x: posXs,
+                    y: posYs,
+                    type: 'scatter',
+                    mode: 'lines',
+                },
+                ]}
+                layout={ {width: 640, height: 480, title: 'A Fancy Plot'} }
+            /> */}
         </>
     )
 }
